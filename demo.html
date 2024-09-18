@@ -49,14 +49,14 @@
         </div>
     </div>
     <script>
-        const socket = new WebSocket('http://127.0.0.1:8000/secured-network');
-
-
+        const socket = new WebSocket('ws://statistical-jennica-emekadefirst-4a88678e.koyeb.app/secured-network');
+        
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
         const messageList = document.getElementById('messageList');
         const publicKeyInput = document.getElementById('public_key');
 
+        
 
         sendButton.addEventListener('click', () => {
             const message = messageInput.value;

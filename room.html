@@ -193,9 +193,7 @@
         <div class="chat-header">
             <div class="title">Chat Room</div>
             <div class="user-info">
-            <button id="descrptyMessage">
-                Decrypt 
-            </button>
+                <button id="decryptButton">Decrypt Message</button>
             </div>
         </div>
         <div class="chat-messages" id="chatMessages">
@@ -213,17 +211,16 @@
 
     <script>
         publicKey = prompt("Please enter your public key:");
-        privateKey = prompt("Please enter your private key:");
         sessionStorage.setItem('public_key', publicKey);
-        sessionStorage.setItem('private_key', privateKey);
+
         document.addEventListener("DOMContentLoaded", function () {
-            const socket = new WebSocket('ws://127.0.0.1:8000/secured-network');
+            const socket = new WebSocket('ws://statistical-jennica-emekadefirst-4a88678e.koyeb.app/secured-network');
             const chatMessages = document.getElementById('chatMessages');
             const messageInput = document.getElementById('messageInput');
             const sendButton = document.getElementById('sendButton');
-            const channel = new BroadcastChannel('chat_channel'); 
+            const decryptButton = document.getElementById('decryptButton'); // Add decrypt button
+            const channel = new BroadcastChannel('chat_channel');
 
-    
             socket.onopen = function () {
                 console.log("WebSocket connection opened");
                 messageInput.disabled = false;
@@ -231,7 +228,7 @@
                 sendButton.classList.remove('disabled');
             };
 
-            // Send message when send button is clicked
+            
             sendButton.addEventListener('click', () => {
                 const message = messageInput.value.trim();
                 const publicKey = sessionStorage.getItem('public_key');
@@ -245,14 +242,14 @@
                 }
             });
 
-            // Send message on Enter key press
+            
             messageInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     sendButton.click();
                 }
             });
 
-            // Handle incoming messages from server
+            
             socket.onmessage = function (event) {
                 const encryptedMessage = event.data;
                 const messageElement = document.createElement('div');
@@ -265,53 +262,71 @@
                 chatMessages.appendChild(messageElement);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
 
-                // Broadcast the message to other tabs
+                
                 channel.postMessage(encryptedMessage);
             };
 
-            // Handle connection close
+            
             socket.onclose = function () {
                 console.log("WebSocket connection closed");
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('message');
-                messageElement.innerHTML = `
-                    <div class="message-content">
-                        Connection closed by the server.
-                    </div>
-                `;
-                chatMessages.appendChild(messageElement);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                displayMessage("Connection closed by the server.");
             };
 
-            // Handle errors
             socket.onerror = function () {
                 console.log("WebSocket error");
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('message');
-                messageElement.innerHTML = `
-                    <div class="message-content">
-                        Error connecting to the server.
-                    </div>
-                `;
-                chatMessages.appendChild(messageElement);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
+                displayMessage("Error connecting to the server.");
             };
 
-            // Listen for messages from other tabs
+            
             channel.onmessage = function (event) {
                 const encryptedMessage = event.data;
+                displayMessage(encryptedMessage);
+            };
+
+            
+            decryptButton.addEventListener('click', async () => {
+                const encryptedMessage = chatMessages.lastElementChild.querySelector('.message-content').textContent; 
+                privateKey = prompt("Please enter your private key:");
+                sessionStorage.setItem('private_key', privateKey);
+                if (encryptedMessage && privateKey) {
+                    const payload = {
+                        message: encryptedMessage,
+                        private_key: privateKey
+                    };
+
+                    try {
+                        const response = await fetch('https://statistical-jennica-emekadefirst-4a88678e.koyeb.app/message/decrypt', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload)
+                        });
+
+                        const result = await response.json();
+                        displayMessage(result.decrypted_message);
+                    } catch (error) {
+                        console.error('Error decrypting the message:', error);
+                        displayMessage("Failed to decrypt the message.");
+                    }
+                } else {
+                    displayMessage("No message to decrypt or private key is missing.");
+                }
+            });
+            function displayMessage(content) {
                 const messageElement = document.createElement('div');
                 messageElement.classList.add('message');
                 messageElement.innerHTML = `
-                    <div class="message-content">
-                        ${encryptedMessage}
-                    </div>
-                `;
+                <div class="message-content" style="margin-left: 0;">
+                    ${content}
+                </div>
+                        `;
                 chatMessages.appendChild(messageElement);
                 chatMessages.scrollTop = chatMessages.scrollHeight;
-            };
+            }
         });
     </script>
+
 
 </body>
 
