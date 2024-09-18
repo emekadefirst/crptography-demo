@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSA Key Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        h3 {
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            resize: none;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.25);
+        }
+
+        #debug {
+            margin-top: 20px;
+            text-align: left;
+            font-family: monospace;
+            font-size: 12px;
+            color: #333;
+            background-color: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            height: 100px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>RSA Key Generator</h2>
+        <button id="generateBtn">Generate Keys</button>
+
+        <h3>Public Key</h3>
+        <textarea id="publicKey" readonly></textarea>
+
+        <h3>Private Key</h3>
+        <textarea id="privateKey" readonly></textarea>
+
+        <div id="debug"></div>
+    </div>
+
+    <script>
+        const generateBtn = document.getElementById('generateBtn');
+        const publicKeyTextarea = document.getElementById('publicKey');
+        const privateKeyTextarea = document.getElementById('privateKey');
+        const debugDiv = document.getElementById('debug');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        generateBtn.addEventListener('click', async function () {
+            log('Generate button clicked');
+            try {
+                log('Fetching keys from server...');
+                const response = await fetch('http://127.0.0.1:8000/rsa/key', {
+                    method: 'GET'
+                });
+                log('Response received');
+                const data = await response.json();
+                log('Data parsed');
+
+                if (data.public_key && data.private_key) {
+                    log('Keys received successfully');
+                    publicKeyTextarea.value = data.public_key;
+                    privateKeyTextarea.value = data.private_key;
+                    log('Keys set in textareas');
+                    // Attempt to restore keys from localStorage on page loa
+
+                    // Store keys in localStorage as a backup
+                    localStorage.setItem('publicKey', data.public_key);
+                    localStorage.setItem('privateKey', data.private_key);
+                    log('Keys stored in localStorage');
+                } else {
+                    log('Failed to generate keys: Invalid data received');
+                    alert('Failed to generate keys.');
+                }
+            } catch (error) {
+                log(`Error fetching keys: ${error.message}`);
+                console.error('Error fetching keys:', error);
+                alert('Error generating keys.');
+            }
+        });
+        window.addEventListener('load', function () {
+            const storedPublicKey = localStorage.getItem('publicKey');
+            const storedPrivateKey = localStorage.getItem('privateKey');
+            if (storedPublicKey && storedPrivateKey) {
+                publicKeyTextarea.value = storedPublicKey;
+                privateKeyTextarea.value = storedPrivateKey;
+                log('Keys restored from localStorage');
+            }
+        });
+    </script>
+</body>
+
+</html>
